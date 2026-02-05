@@ -28,6 +28,12 @@ jobs:
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
 
+    # خطوة Debug مؤقتة للتأكد من المسارات
+    - name: Debug paths
+      run: |
+        pwd
+        ls -R
+
     - name: Build with CMake
       run: |
         mkdir -p build
