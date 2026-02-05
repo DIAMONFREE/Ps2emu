@@ -1,4 +1,4 @@
-name: Android Build
+name: Android NDK Build
 
 on:
   push:
@@ -21,11 +21,22 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4   # ✅ النسخة الجديدة
+    - name: Install Android SDK + NDK
+      uses: android-actions/setup-android@v3
       with:
-        name: Play-ES3-APK
-        path: app/build/outputs/apk/debug/*.apk
+        api-level: 30
+        ndk-version: 25.2.9519653
+        cmake-version: 3.22.1
+
+    - name: Build with CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
+
+    - name: Upload APK (or binaries)
+      uses: actions/upload-artifact@v4
+      with:
+        name: Play-ES3-Build
+        path: build/*
