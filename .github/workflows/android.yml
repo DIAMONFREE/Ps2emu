@@ -31,7 +31,11 @@ jobs:
     - name: Unzip source
       run: |
         unzip Play--master.zip -d PlaySrc
-        ls -R PlaySrc   # Debug: يطبع الملفات للتأكد أنها تفكت
+
+    - name: Debug after unzip
+      run: |
+        echo "محتويات PlaySrc:"
+        ls -R PlaySrc
 
     - name: Build with CMake
       run: |
