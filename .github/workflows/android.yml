@@ -32,7 +32,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake ../Play--master -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Upload Build Output
