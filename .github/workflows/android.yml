@@ -28,17 +28,15 @@ jobs:
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
 
-    # خطوة Debug مؤقتة للتأكد من المسارات
-    - name: Debug paths
+    - name: Unzip source
       run: |
-        pwd
-        ls -R
+        unzip Play--master.zip -d PlaySrc
 
     - name: Build with CMake
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake ../PlaySrc -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Upload Build Output
