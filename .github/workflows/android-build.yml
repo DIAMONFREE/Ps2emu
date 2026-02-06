@@ -10,10 +10,6 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,14 +20,22 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      - name: Install unzip if missing
-        run: sudo apt-get update && sudo apt-get install -y unzip
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip build-essential cmake clang
+
+      - name: Set up Android SDK and NDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 33
+          ndk-version: 25.2.9519653
+          cmake-version: 3.31.1
 
       - name: Prepare project folder
         run: |
           mkdir project
           unzip Play-SIDO-Edition.zip -d project
-          # إذا ZIP يحتوي مجلد داخلي باسم Play-SIDO-Edition
           if [ -d "project/Play-SIDO-Edition/Play-SIDO-Edition" ]; then
             mv project/Play-SIDO-Edition/Play-SIDO-Edition/* project/Play-SIDO-Edition/
             mv project/Play-SIDO-Edition/Play-SIDO-Edition/.* project/Play-SIDO-Edition/ 2>/dev/null || true
@@ -41,7 +45,6 @@ jobs:
         run: |
           cd project/Play-SIDO-Edition
           mkdir -p build
-          cd build
 
       - name: Configure CMake
         run: |
@@ -49,14 +52,15 @@ jobs:
           cmake ../ \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=android-31 \
-            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -G "Unix Makefiles"
 
       - name: Build project
         run: |
           cd project/Play-SIDO-Edition/build
           make -j$(nproc)
 
-      - name: Upload APK or build artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Play-SIDO-Edition-Build
