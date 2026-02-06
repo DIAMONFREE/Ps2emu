@@ -15,7 +15,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        submodules: true   # يسحب كل الـ submodules تلقائيًا
+        submodules: true
 
     - name: Debug project structure
       run: ls -R
@@ -37,7 +37,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake ../Play--master -DCMAKE_BUILD_TYPE=Release
+        cmake ../Play- -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Upload Build Output
