@@ -17,6 +17,9 @@ jobs:
       with:
         submodules: true   # يسحب كل الـ submodules تلقائيًا
 
+    - name: Debug project structure
+      run: ls -R
+
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
@@ -34,7 +37,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake ../Play--master -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Upload Build Output
