@@ -12,13 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout code (if needed)
       uses: actions/checkout@v4
-      with:
-        submodules: true
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y unzip wget
+
+    - name: Download Play- zip from Google Drive
+      run: |
+        mkdir -p ~/play_temp
+        cd ~/play_temp
+        wget -O play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2"
+
+    - name: Unzip Play- project
+      run: |
+        cd ~/play_temp
+        unzip -q play-.zip
+        # اكتشاف المجلد الناتج بعد فك الضغط
+        PROJECT_DIR=$(find . -maxdepth 1 -type d -name "Play-*")
+        echo "Project folder is: $PROJECT_DIR"
+        mv "$PROJECT_DIR" play-
 
     - name: Debug project structure
-      run: ls -R
+      run: ls -R ~/play_temp/play-
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -32,17 +50,6 @@ jobs:
         api-level: 30
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
-
-    - name: Download Play- project zip
-      run: |
-        mkdir -p ~/play_temp
-        cd ~/play_temp
-        curl -L "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -o play-.zip
-
-    - name: Unzip Play- project
-      run: |
-        cd ~/play_temp
-        unzip -q play-.zip -d play-
 
     - name: Build with CMake
       run: |
