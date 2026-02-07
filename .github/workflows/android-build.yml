@@ -1,59 +1,59 @@
 name: Android NDK Build
 
 on:
-  workflow_dispatch:  # تقدر تشغله يدوياً من GitHub
   push:
     branches:
       - main
       - master
+  pull_request:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
 
-      - name: Download project zip from Google Drive
-        run: |
-          mkdir -p play_temp
-          cd play_temp
-          wget -O Play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2"
-          unzip Play-.zip
-          cd ..
+    - name: Download Play- Project from Google Drive
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/play_temp
+        cd $GITHUB_WORKSPACE/play_temp
+        curl -L "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -o play-.zip
+        unzip -o play-.zip
+        ls -R
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Install Android SDK + NDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 30
-          ndk-version: 25.2.9519653
-          cmake-version: 3.22.1
+    - name: Install Android SDK + NDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 30
+        ndk-version: 25.2.9519653
+        cmake-version: 3.22.1
 
-      - name: Build Android Play! Emulator
-        run: |
-          cd play_temp/Play-
-          mkdir -p build
-          cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTARGET_PLATFORM_ANDROID=ON \
-            -DUSE_GLEW=OFF \
-            -DUSE_OPENAL=OFF \
-            -DUSE_LIBEVDEV=OFF \
-            -DBUILD_PLAY=ON
-          make -j$(nproc)
+    - name: Build Play! for Android
+      run: |
+        cd $GITHUB_WORKSPACE/play_temp/Play-
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DTARGET_PLATFORM_ANDROID=ON \
+          -DUSE_GLEW=OFF \
+          -DUSE_OPENAL=OFF \
+          -DUSE_LIBEVDEV=OFF \
+          -DBUILD_PLAY=ON
+        make -j$(nproc)
 
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Play-Android-Build
-          path: play_temp/Play-/build/*
+    - name: Upload Build Output
+      uses: actions/upload-artifact@v4
+      with:
+        name: Play-Android-Build
+        path: $GITHUB_WORKSPACE/play_temp/Play-/build/*
