@@ -1,28 +1,23 @@
-name: Android NDK Build from Drive
+name: Android NDK Build
 
 on:
-  workflow_dispatch:   # تقدر تشغله يدويًا من GitHub
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install Python and gdown
-      run: |
-        sudo apt update
-        sudo apt install -y python3-pip unzip
-        pip3 install gdown
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
 
-    - name: Download Play- zip from Google Drive
-      run: |
-        gdown https://drive.google.com/uc?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U -O play-.zip
-
-    - name: Unzip Play- archive
-      run: |
-        unzip -q play-.zip -d .
-
-    - name: Debug folder structure
+    - name: Debug project structure
       run: ls -R
 
     - name: Set up JDK
@@ -38,15 +33,27 @@ jobs:
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
 
+    - name: Download Play- project zip
+      run: |
+        mkdir -p ~/play_temp
+        cd ~/play_temp
+        curl -L "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -o play-.zip
+
+    - name: Unzip Play- project
+      run: |
+        cd ~/play_temp
+        unzip -q play-.zip -d play-
+
     - name: Build with CMake
       run: |
+        cd ~/play_temp/play-
         mkdir -p build
         cd build
-        cmake ../Play- -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
 
     - name: Upload Build Output
       uses: actions/upload-artifact@v4
       with:
         name: Play-ES3-Build
-        path: build/*
+        path: ~/play_temp/play-/build/*
