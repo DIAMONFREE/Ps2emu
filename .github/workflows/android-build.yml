@@ -1,4 +1,4 @@
-name: Android NDK Build
+name: Build Play! Android
 
 on:
   push:
@@ -8,46 +8,36 @@ on:
   pull_request:
 
 jobs:
-  build:
+  android_build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repo
       uses: actions/checkout@v4
-      with:
-        submodules: true
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y unzip wget
-
-    - name: Download Project Zip from Google Drive
+    - name: Download Project from Google Drive
       run: |
-        mkdir -p ~/play_temp
-        cd ~/play_temp
-        wget -O play-.zip "https://drive.usercontent.google.com/download?id=1_hXUqlAT0fd07t6iq8H3H1bUtyxD5aO7&export=download&confirm=t&uuid=30278f74-0e2c-4d20-8d5e-f8fa0a078209"
+        mkdir -p PlayTemp
+        wget "https://drive.usercontent.google.com/download?id=1bddLbRJKmc89w6ep4tQYTwvMQv6yv470&export=download&confirm=t&uuid=bb209c87-8d33-43df-821c-6c6f781fb2c8" -O PlayTemp/Play.zip
+        unzip PlayTemp/Play.zip -d PlayTemp
+        cd PlayTemp/Play-
 
-    - name: Unzip Project
-      run: |
-        cd ~/play_temp
-        unzip -q play-.zip
-        ls -R  # للتأكد من فك الضغط
-
-    - name: Set up JDK
+    - name: Setup JDK
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
-        java-version: '17'
+        distribution: temurin
+        java-version: 17
 
-    - name: Install Android SDK + NDK
+    - name: Setup Android SDK + NDK
       uses: android-actions/setup-android@v3
       with:
         api-level: 30
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
 
-    - name: Build for Android
+    - name: Build Play! Emulator for Android
       run: |
-        cd ~/play_temp/Play-   # لاحظ حرف P كبير
+        cd PlayTemp/Play-
         mkdir -p build
         cd build
         cmake .. \
@@ -60,5 +50,5 @@ jobs:
     - name: Upload Build Output
       uses: actions/upload-artifact@v4
       with:
-        name: Play-ES3-Build
-        path: ~/play_temp/Play-/build/*
+        name: Play-Android-Build
+        path: PlayTemp/Play-/build/*
