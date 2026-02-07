@@ -14,23 +14,30 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: true
 
-    - name: Install required libraries for OpenGL and GLEW
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libglew-dev libgl1-mesa-dev libglu1-mesa-dev unzip wget
+        sudo apt-get install -y unzip wget
 
-    - name: Download project zip from Google Drive
+    - name: Download Play- zip from Google Drive
       run: |
         mkdir -p ~/play_temp
         cd ~/play_temp
-        wget -O play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2"
-        unzip -o play-.zip
+        wget --no-check-certificate "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -O play-.zip
 
-    - name: Debug project structure
-      run: ls -R ~/play_temp
+    - name: Unzip Play- project
+      run: |
+        cd ~/play_temp
+        unzip -q play-.zip
+        # Get the extracted folder name dynamically
+        EXTRACTED_FOLDER=$(unzip -Z -1 play-.zip | head -n1 | cut -d/ -f1)
+        echo "EXTRACTED_FOLDER=$EXTRACTED_FOLDER" >> $GITHUB_ENV
+
+    - name: Debug folder structure
+      run: |
+        echo "Extracted folder: $EXTRACTED_FOLDER"
+        ls -R ~/play_temp/$EXTRACTED_FOLDER
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -47,7 +54,7 @@ jobs:
 
     - name: Build with CMake
       run: |
-        cd ~/play_temp/play-
+        cd ~/play_temp/$EXTRACTED_FOLDER
         mkdir -p build
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -57,4 +64,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Play-ES3-Build
-        path: ~/play_temp/play-/build/*
+        path: ~/play_temp/$EXTRACTED_FOLDER/build/*
