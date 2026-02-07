@@ -2,9 +2,7 @@ name: Android NDK Build
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   pull_request:
 
 jobs:
@@ -12,56 +10,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y unzip wget
+      - name: Debug project structure
+        run: ls -R
 
-    - name: Download Play- zip from Google Drive
-      run: |
-        mkdir -p ~/play_temp
-        cd ~/play_temp
-        wget --no-check-certificate "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -O play-.zip
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Unzip Play- project
-      run: |
-        cd ~/play_temp
-        unzip -q play-.zip
-        # Get the extracted folder name dynamically
-        EXTRACTED_FOLDER=$(unzip -Z -1 play-.zip | head -n1 | cut -d/ -f1)
-        echo "EXTRACTED_FOLDER=$EXTRACTED_FOLDER" >> $GITHUB_ENV
+      - name: Install Android SDK + NDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 30
+          ndk-version: 25.2.9519653
+          cmake-version: 3.22.1
 
-    - name: Debug folder structure
-      run: |
-        echo "Extracted folder: $EXTRACTED_FOLDER"
-        ls -R ~/play_temp/$EXTRACTED_FOLDER
+      - name: Build Android GLES3
+        run: |
+          mkdir -p build
+          cd build
+          cmake ../Play- \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DTARGET_PLATFORM_ANDROID=ON \
+            -DUSE_GLEW=OFF \
+            -DBUILD_PLAY=ON
+          make -j$(nproc)
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
-    - name: Install Android SDK + NDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 30
-        ndk-version: 25.2.9519653
-        cmake-version: 3.22.1
-
-    - name: Build with CMake
-      run: |
-        cd ~/play_temp/$EXTRACTED_FOLDER
-        mkdir -p build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
-        make -j$(nproc)
-
-    - name: Upload Build Output
-      uses: actions/upload-artifact@v4
-      with:
-        name: Play-ES3-Build
-        path: ~/play_temp/$EXTRACTED_FOLDER/build/*
+      - name: Upload Build Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: Play-Android-ES3
+          path: build/*
