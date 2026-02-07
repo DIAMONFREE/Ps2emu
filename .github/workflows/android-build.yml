@@ -4,51 +4,47 @@ on:
   push:
     branches:
       - main
-      - master
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   android_build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download Project from Google Drive
+    - name: Install required packages
       run: |
-        mkdir -p PlayTemp
-        wget "https://drive.usercontent.google.com/download?id=1bddLbRJKmc89w6ep4tQYTwvMQv6yv470&export=download&confirm=t&uuid=bb209c87-8d33-43df-821c-6c6f781fb2c8" -O PlayTemp/Play.zip
-        unzip PlayTemp/Play.zip -d PlayTemp
-        cd PlayTemp/Play-
+        sudo apt-get update
+        sudo apt-get install -y unzip cmake build-essential pkg-config
 
-    - name: Setup JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: temurin
-        java-version: 17
-
-    - name: Setup Android SDK + NDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 30
-        ndk-version: 25.2.9519653
-        cmake-version: 3.22.1
-
-    - name: Build Play! Emulator for Android
+    - name: Download project zip from Google Drive
       run: |
-        cd PlayTemp/Play-
+        wget -O Play_Android.zip "https://drive.usercontent.google.com/download?id=1gwN85bEWjuXiovBd5rlZiKypJPPv4gF0&export=download&confirm=t&uuid=c67e84c8-628a-4f36-ac74-95a935b9e671"
+
+    - name: Unzip project
+      run: unzip Play_Android.zip -d PlayProject
+
+    - name: Create build folder
+      run: |
+        cd PlayProject/Play-
         mkdir -p build
-        cd build
+
+    - name: Configure CMake for Android
+      run: |
+        cd PlayProject/Play-/build
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
-          -DTARGET_PLATFORM_ANDROID=ON \
-          -DUSE_GLEW=OFF \
-          -DBUILD_PLAY=ON
+          -DTARGET_PLATFORM_ANDROID=ON
+
+    - name: Build project
+      run: |
+        cd PlayProject/Play-/build
         make -j$(nproc)
 
-    - name: Upload Build Output
+    - name: Upload build output
       uses: actions/upload-artifact@v4
       with:
         name: Play-Android-Build
-        path: PlayTemp/Play-/build/*
+        path: PlayProject/Play-/build/
