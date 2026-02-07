@@ -12,31 +12,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code (if needed)
+    - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        submodules: true
 
-    - name: Install dependencies
+    - name: Install required libraries for OpenGL and GLEW
       run: |
         sudo apt-get update
-        sudo apt-get install -y unzip wget
+        sudo apt-get install -y build-essential cmake libglew-dev libgl1-mesa-dev libglu1-mesa-dev unzip wget
 
-    - name: Download Play- zip from Google Drive
+    - name: Download project zip from Google Drive
       run: |
         mkdir -p ~/play_temp
         cd ~/play_temp
         wget -O play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2"
-
-    - name: Unzip Play- project
-      run: |
-        cd ~/play_temp
-        unzip -q play-.zip
-        # اكتشاف المجلد الناتج بعد فك الضغط
-        PROJECT_DIR=$(find . -maxdepth 1 -type d -name "Play-*")
-        echo "Project folder is: $PROJECT_DIR"
-        mv "$PROJECT_DIR" play-
+        unzip -o play-.zip
 
     - name: Debug project structure
-      run: ls -R ~/play_temp/play-
+      run: ls -R ~/play_temp
 
     - name: Set up JDK
       uses: actions/setup-java@v3
