@@ -2,7 +2,9 @@ name: Android NDK Build
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
 
 jobs:
@@ -10,40 +12,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Debug project structure
-        run: ls -R
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y unzip wget
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Download Play- zip from Google Drive
+      run: |
+        wget -O play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2"
+        unzip -q play-.zip -d ./   # هذا يفك الضغط هنا
+        ls -R
 
-      - name: Install Android SDK + NDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 30
-          ndk-version: 25.2.9519653
-          cmake-version: 3.22.1
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Build Android GLES3
-        run: |
-          mkdir -p build
-          cd build
-          cmake ../Play- \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DTARGET_PLATFORM_ANDROID=ON \
-            -DUSE_GLEW=OFF \
-            -DBUILD_PLAY=ON
-          make -j$(nproc)
+    - name: Install Android SDK + NDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 30
+        ndk-version: 25.2.9519653
+        cmake-version: 3.22.1
 
-      - name: Upload Build Output
-        uses: actions/upload-artifact@v4
-        with:
-          name: Play-Android-ES3
-          path: build/*
+    - name: Build Play! for Android GLES3
+      run: |
+        cd play-   # هنا نتأكد من الدخول لمجلد المشروع الصحيح
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DTARGET_PLATFORM_ANDROID=ON \
+          -DUSE_GLEW=OFF \
+          -DBUILD_PLAY=ON
+        make -j$(nproc)
+
+    - name: Upload Build Output
+      uses: actions/upload-artifact@v4
+      with:
+        name: Play-ES3-Build
+        path: play-/build/*
