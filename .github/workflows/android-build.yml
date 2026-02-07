@@ -1,34 +1,24 @@
-name: Build Play! for Android
+name: Android NDK Build
 
 on:
   push:
     branches:
       - main
       - master
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
       with:
         submodules: true
 
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y unzip wget
-
-    - name: Download Play! project from Google Drive
-      run: |
-        wget -O play-.zip "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t"
-        ls -lh play-.zip
-
-    - name: Unzip project
-      run: |
-        unzip -q play-.zip -d $GITHUB_WORKSPACE
-        ls -R $GITHUB_WORKSPACE
+    - name: Debug project structure
+      run: ls -R
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -43,20 +33,29 @@ jobs:
         ndk-version: 25.2.9519653
         cmake-version: 3.22.1
 
-    - name: Build Play! for Android
+    - name: Download project zip from Drive
       run: |
-        cd $GITHUB_WORKSPACE/Play-   # الحرف الكبير مهم
+        mkdir -p play_temp
+        cd play_temp
+        curl -L "https://drive.usercontent.google.com/download?id=1VaFlvOCWSDwevuQaOOm0CpJfDFfgTN9U&export=download&authuser=0&confirm=t&uuid=ea8272c8-61b7-479a-b2fb-efb7a81d4db2" -o Play-.zip
+        unzip -q Play-.zip
+
+    - name: Build with CMake for Android
+      run: |
+        cd play_temp/Play-
         mkdir -p build
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DTARGET_PLATFORM_ANDROID=ON \
           -DUSE_GLEW=OFF \
+          -DUSE_OPENAL=OFF \
+          -DUSE_LIBEVDEV=OFF \
           -DBUILD_PLAY=ON
         make -j$(nproc)
 
     - name: Upload Build Output
       uses: actions/upload-artifact@v4
       with:
-        name: Play-ES3-Build
-        path: $GITHUB_WORKSPACE/Play-/build/*
+        name: Play-ES3-Build-Android
+        path: play_temp/Play-/build/*
