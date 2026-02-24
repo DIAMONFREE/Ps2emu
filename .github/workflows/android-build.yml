@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout (empty)
+    - name: Checkout
       uses: actions/checkout@v4
 
     - name: Install dependencies
@@ -16,19 +16,25 @@ jobs:
         sudo apt update
         sudo apt install -y cmake unzip wget ninja-build
 
-    - name: Download project from Google Drive
+    - name: Download project
       run: |
         wget -O project.zip "https://drive.usercontent.google.com/download?id=1jD7RGC1BLUT1Pm8Z_GatBnx9PsyimUTk&export=download&confirm=t"
 
     - name: Unzip project
       run: |
         unzip project.zip
-        ls
 
-    - name: Build Android
+    - name: Find project root
       run: |
-        cd Play-
-        mkdir -p build
+        PROJECT_DIR=$(find . -maxdepth 2 -type d -name "Play-*" | head -n 1)
+        echo "Project dir: $PROJECT_DIR"
+        echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+    - name: Configure
+      run: |
+        cd $PROJECT_DIR
+        rm -rf build
+        mkdir build
         cd build
 
         cmake .. \
@@ -42,4 +48,7 @@ jobs:
           -DUSE_OPENAL=OFF \
           -DUSE_LIBEVDEV=OFF
 
+    - name: Build
+      run: |
+        cd $PROJECT_DIR/build
         make -j$(nproc)
