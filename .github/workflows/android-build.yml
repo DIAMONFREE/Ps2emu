@@ -1,50 +1,68 @@
-name: Build Play! Android
+name: Android Build
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ "main", "master" ]
+  pull_request:
 
 jobs:
-  android_build:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Install required packages
+    - name: Install tools
       run: |
-        sudo apt-get update
-        sudo apt-get install -y unzip cmake build-essential pkg-config
+        sudo apt update
+        sudo apt install -y unzip curl
+
+    - name: Install Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Android SDK & NDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 30
+        ndk-version: 25.2.9519653
+        cmake-version: 3.22.1
 
     - name: Download project zip from Google Drive
       run: |
-        wget -O Play_Android.zip "https://drive.usercontent.google.com/download?id=1gwN85bEWjuXiovBd5rlZiKypJPPv4gF0&export=download&confirm=t&uuid=c67e84c8-628a-4f36-ac74-95a935b9e671"
+        curl -L "https://drive.usercontent.google.com/download?id=1jD7RGC1BLUT1Pm8Z_GatBnx9PsyimUTk&export=download&confirm=t" -o project.zip
 
     - name: Unzip project
-      run: unzip Play_Android.zip -d PlayProject
-
-    - name: Create build folder
       run: |
-        cd PlayProject/Play-
-        mkdir -p build
+        unzip project.zip
+        ls
 
-    - name: Configure CMake for Android
+    - name: Create build directory
       run: |
-        cd PlayProject/Play-/build
+        cd Play-
+        mkdir build
+
+    - name: Configure with CMake (Android only)
+      run: |
+        cd Play-/build
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
-          -DTARGET_PLATFORM_ANDROID=ON
+          -DTARGET_PLATFORM_ANDROID=ON \
+          -DBUILD_PLAY=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_PSFPLAYER=OFF \
+          -DBUILD_LIBRETRO_CORE=OFF \
+          -DUSE_OPENAL=OFF \
+          -DUSE_GLEW=OFF \
+          -DUSE_LIBEVDEV=OFF
 
-    - name: Build project
+    - name: Build
       run: |
-        cd PlayProject/Play-/build
+        cd Play-/build
         make -j$(nproc)
 
     - name: Upload build output
       uses: actions/upload-artifact@v4
       with:
         name: Play-Android-Build
-        path: PlayProject/Play-/build/
+        path: Play-/build
