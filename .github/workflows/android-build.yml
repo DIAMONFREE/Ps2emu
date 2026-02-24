@@ -1,68 +1,45 @@
 name: Android Build
 
 on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install tools
+    - name: Checkout (empty)
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y unzip curl
+        sudo apt install -y cmake unzip wget ninja-build
 
-    - name: Install Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
-    - name: Install Android SDK & NDK
-      uses: android-actions/setup-android@v3
-      with:
-        api-level: 30
-        ndk-version: 25.2.9519653
-        cmake-version: 3.22.1
-
-    - name: Download project zip from Google Drive
+    - name: Download project from Google Drive
       run: |
-        curl -L "https://drive.usercontent.google.com/download?id=1jD7RGC1BLUT1Pm8Z_GatBnx9PsyimUTk&export=download&confirm=t" -o project.zip
+        wget -O project.zip "https://drive.usercontent.google.com/download?id=1jD7RGC1BLUT1Pm8Z_GatBnx9PsyimUTk&export=download&confirm=t"
 
     - name: Unzip project
       run: |
         unzip project.zip
         ls
 
-    - name: Create build directory
+    - name: Build Android
       run: |
         cd Play-
-        mkdir build
+        mkdir -p build
+        cd build
 
-    - name: Configure with CMake (Android only)
-      run: |
-        cd Play-/build
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DTARGET_PLATFORM_ANDROID=ON \
           -DBUILD_PLAY=ON \
           -DBUILD_TESTS=OFF \
-          -DBUILD_PSFPLAYER=OFF \
           -DBUILD_LIBRETRO_CORE=OFF \
-          -DUSE_OPENAL=OFF \
+          -DBUILD_PSFPLAYER=OFF \
           -DUSE_GLEW=OFF \
+          -DUSE_OPENAL=OFF \
           -DUSE_LIBEVDEV=OFF
 
-    - name: Build
-      run: |
-        cd Play-/build
         make -j$(nproc)
-
-    - name: Upload build output
-      uses: actions/upload-artifact@v4
-      with:
-        name: Play-Android-Build
-        path: Play-/build
